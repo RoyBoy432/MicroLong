@@ -1,0 +1,159 @@
+---
+title: "Comparative Longevity"
+author: "Jay T. Lennon"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes:
+   - \usepackage{array}
+output: pdf_document
+geometry: margin=2.54cm
+---
+
+## 1) SETUP
+
+### A. Retrieve and Set Your Working Directory
+
+```{r, results = 'hide'}
+rm(list = ls())
+getwd()
+setwd("~/GitHub/MicroLong/")
+```
+
+
+## 2) LOAD DATA
+
+```{r}
+# http://genomics.senescence.info/download.html#anage
+data <- read.table("data/long.scale.txt", sep="\t", header=TRUE)
+log.mass <- log10(data$weight.g)
+log.long <- log10(data$max.long.yr)
+df <- data.frame(log.mass, log.long)
+```
+
+## 3) CREATE HEAT MAP DATA
+```{r}
+# from http://bonburubird.blogspot.com/2013/12/density-heat-map-in-r.html
+x <- densCols(log.mass,log.long, colramp=colorRampPalette(c("black", "white")))
+df$dens <- col2rgb(x)[1,] + 1L
+cols <-  colorRampPalette(c("#000099", "#00FEFF", "#45FE4F", 
+                            "#FCFF00", "#FF9400", "#FF3100"))(256)
+df$col <- cols[df$dens]
+```
+
+## 4) REGRESSION MODEL
+```{r}
+
+mod1 <- lm(log.long ~ log.mass)
+pred.frame1 <- data.frame(log.mass = seq(-1, 9, length.out = length(log.mass)))
+
+# Confidence Hulls Function
+add.hull <- function(model = "", pred.frame = ""){
+  PI.U <- predict(model, interval = "p", newdata=pred.frame)[, "upr"]
+  PI.L <- predict(model, interval = "p", newdata=pred.frame)[, "lwr"]
+  pred.frame2 <- unlist(pred.frame)
+  X.Vec <- c(pred.frame2, tail(pred.frame2, 1), rev(pred.frame2),
+             head(pred.frame2, 1))
+  Y.Vec <- c(PI.U, tail(PI.L, 1), rev(PI.L), head(PI.U,1))
+  polygon(X.Vec, Y.Vec, col = "gray90", border = NA)
+}
+```
+
+
+## 5) PLOT NON-MICROBIAL DATA
+```{r}
+png(filename="~/GitHub/MicroLong/figures/comparative.long.png",
+     width = 1200, height = 900, res = 96*2)
+
+par(mar = c(5, 7, 5, 7))
+
+# make plot without adding points
+plot(log.long~log.mass, data=df[order(df$dens),], type = "n",
+     xlim = c(-0.5, 8.5), ylim = c(-0.2, 3),
+     pch = 20, col = col, lwd = 2, bty = "n",
+     cex = 2.5, yaxt = "n", xaxt = "n", cex.lab = 1, cex.axis = 1.5,
+     las = 1, ylab = "", xlab = "")
+
+# add prediction intervals to plots
+add.hull(model = mod1, pred.frame = pred.frame1)
+
+# add regression line
+new.mass <- seq(-1, 9, 0.1)
+regline <- predict(mod1, newdata = data.frame(log.mass = new.mass))
+lines(new.mass, regline, lwd = 3, lty = 2, col = "black")
+
+# add border around plot
+box(lwd = 3)
+
+# add heat-mapped points
+points(log.long~log.mass, data=df[order(df$dens),], pch = 20, col = col)
+
+
+# add axis labels
+mtext(side = 1, 'Body mass (g)', line = 3.5, cex = 2)
+mtext(side = 2, 'Max lifespan (yr)',outer = TRUE, cex = 2, 
+      line = -2.5, adj = 0.5)
+
+# add major axes
+axis(side = 1, lwd.ticks = 3, cex.axis = 1.5, las = 1,
+     labels = expression(10^0, 10^2, 10^4, 10^6, 10^8),
+     at = c(0, 2, 4, 6, 8))
+
+axis(side = 3, lwd.ticks = 3, cex.axis = 1.5, las = 1,
+   labels = F, at = c(0, 2, 4, 6, 8))
+
+axis(side = 2, lwd.ticks = 3, cex.axis = 1.5, las = 1,
+     labels = expression(10^0, 10^1, 10^2, 10^3),
+     at = c(0, 1, 2, 3))
+
+axis(side = 4, lwd.ticks = 3, cex.axis = 1.5, las = 1,
+    at = c(0, 1, 2, 3), labels = F)
+
+dev.off()
+graphics.off()
+```
+
+
+## 6) PLOT WITH MICROBIAL SCALE (NOT UPDATED SINCE SUMMER 2017)
+```{r}
+png(filename="~/GitHub/Dimensions/Aim1/output/comparative.long.microscale.png",
+     width = 1200, height = 900, res = 96*2)
+
+par(mar = c(5, 7, 5, 7))
+
+plot(log.mass,log.long,
+     xlim = c(-17, 11), ylim = c(-2, 6),
+     pch = 22, bg = "white", lwd = 2, bty = "n",
+     cex = 2.5, yaxt = "n", xaxt = "n", cex.lab = 1, cex.axis = 1.5,
+     las = 1, ylab = "", xlab = "")
+box(lwd = 3)
+
+mtext(side = 1, 'Body mass (g)', line = 3.5, cex = 2)
+mtext(side = 2, 'Max lifespan (yr)',outer = TRUE, cex = 2, 
+      line = -2.5, adj = 0.5)
+
+
+# Major Axes
+axis(side = 1, lwd.ticks = 3, cex.axis = 1.5, las = 1,
+     labels = expression(10^-15, 10^-10, 10^-5, 10^0, 10^5, 10^10),
+     at = c(-15, -10, -5, 0, 5, 10))
+
+axis(side = 3, lwd.ticks = 3, cex.axis = 1.5, las = 1,
+   labels = F, at = c(-15, -10, -5, 0, 5, 10))
+
+axis(side = 2, lwd.ticks = 3, cex.axis = 1.5, las = 1,
+     labels = expression(10^-2, 10^0, 10^2, 10^4,10^6),
+     at = c(-2, 0, 2, 4, 6))
+
+axis(side = 4, lwd.ticks = 3, cex.axis = 1.5, las = 1,
+    at = c(-2, -1, 0, 1, 2, 3, 4, 5, 6), labels = F)
+
+fit <- lm(log.long ~ log.mass)
+new.mass <- seq(-15, 8.5, 0.1)
+regline <- predict(fit, newdata = data.frame(log.mass = new.mass))
+lines(new.mass, regline, lwd = 4, lty = 1, col = "red")
+conf95 <- predict(fit, newdata = data.frame(log.mass = new.mass),
+                  interval = c("prediction"), level = 0.90, type = "response")
+matlines(new.mass, conf95[, c("lwr", "upr")], type="l", lty = 2, lwd = 4, col = "red")
+
+dev.off()
+graphics.off()
+```
