@@ -111,6 +111,74 @@ dev.off()
 graphics.off()
 ```
 
+## 6) LOAD MORE DATA
+
+```{r}
+# http://genomics.senescence.info/download.html#anage
+data2 <- read.table("data/anage_data_mod.txt", sep="\t", header=TRUE)
+log.growth <- log10(data2$GrowthRatePerDay)
+log.long <- log10(data2$MaximumLong_Years)
+df2 <- data.frame(log.growth, log.long)
+
+x2 <- densCols(log.growth,log.long, colramp=colorRampPalette(c("black", "white")))
+df$dens <- col2rgb(x2)[1,] + 1L
+cols <-  colorRampPalette(c("#000099", "#00FEFF", "#45FE4F", 
+                            "#FCFF00", "#FF9400", "#FF3100"))(256)
+df$col <- cols[df$dens]
+
+mod2 <- lm(log.long ~ log.growth)
+pred.frame1 <- data.frame(log.growth = seq(-6, 0.5, length.out = length(log.growth)))
+
+png(filename="~/GitHub/MicroLong/figures/comparative.long.growth.png",
+     width = 1200, height = 900, res = 96*2)
+
+par(mar = c(5, 7, 5, 7))
+
+# make plot without adding points
+plot(log.long~log.growth, data=df[order(df$dens),], type = "n",
+     xlim = c(-3.5, 0.05), ylim = c(-0.2, 3),
+     pch = 20, col = col, lwd = 2, bty = "n",
+     cex = 2.5, yaxt = "n", xaxt = "n", cex.lab = 1, cex.axis = 1.5,
+     las = 1, ylab = "", xlab = "")
+
+# add prediction intervals to plots
+add.hull(model = mod2, pred.frame = pred.frame1)
+
+# add regression line
+new.growth <- seq(-3.5, 0.5, 0.1)
+regline <- predict(mod2, newdata = data.frame(log.growth = new.growth))
+lines(new.growth, regline, lwd = 3, lty = 2, col = "black")
+
+# add border around plot
+box(lwd = 3)
+
+# add heat-mapped points
+points(log.long~log.growth, data=df[order(df$dens),], pch = 20, col = col)
+
+# add axis labels
+mtext(side = 1, 'Growth rate (d^-1)', line = 3.5, cex = 2)
+mtext(side = 2, 'Max lifespan (yr)',outer = TRUE, cex = 2, 
+      line = -2.5, adj = 0.5)
+
+# add major axes
+axis(side = 1, lwd.ticks = 3, cex.axis = 1.5, las = 1,
+     labels = expression(10^-3, 10^-2, 10^-1, 10^0),
+     at = c(-3, -2, -1, 0))
+
+axis(side = 3, lwd.ticks = 3, cex.axis = 1.5, las = 1,
+   labels = F, at = c(-3, -2, -1, 0))
+
+axis(side = 2, lwd.ticks = 3, cex.axis = 1.5, las = 1,
+     labels = expression(10^0, 10^1, 10^2, 10^3),
+     at = c(0, 1, 2, 3))
+
+axis(side = 4, lwd.ticks = 3, cex.axis = 1.5, las = 1,
+    at = c(0, 1, 2, 3), labels = F)
+
+dev.off()
+graphics.off()
+
+```
 
 ## 6) PLOT WITH MICROBIAL SCALE (NOT UPDATED SINCE SUMMER 2017)
 ```{r}
