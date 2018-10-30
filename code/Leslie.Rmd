@@ -26,7 +26,7 @@ require(demogR)
 # Create Leslie matrix
 ```{r}
 m <- t(matrix(c(
-  0, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
   0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 
@@ -39,6 +39,19 @@ m <- t(matrix(c(
   nrow = 10, ncol = 10)) 
 
 eig.m <- eigen.analysis(m)
+```
+
+# Create a components martix
+```{r}
+c <- t(matrix(c(
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+),
+  nrow = 1, ncol = 10)) 
+```
+
+# Project to next time step (m * c0) -> C1)
+```{r}
+c1 <- m %*% c
 ```
 
 # Create initial population vector (number of individuals per class)
