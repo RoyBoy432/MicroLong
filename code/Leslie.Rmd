@@ -25,7 +25,7 @@ require(demogR)
 
 # Create Leslie matrix
 ```{r}
-m <- t(matrix(c(
+m.init <- t(matrix(c(
   2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
   0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -39,6 +39,24 @@ m <- t(matrix(c(
   nrow = 10, ncol = 10)) 
 
 eig.m <- eigen.analysis(m)
+```
+
+# Account for reproductive senescence using eq. 3 in Watve et al. (2006)
+```{r}
+# Rn = R1 - an^b, where R1 = m[1,] where,
+# a = rate of decline in repoductive efficiency,
+# n = age class
+# b = power describing shape of curve; 1 = linear; >1 = convex; < 1 concave
+
+a <- 0.2
+n <- seq(2, 10, by = 1)
+b <- 0.8
+R.age <- m.init[1,1] - a * n^b
+R.age[R.age < 0] <- 0
+R <- as.matrix(c(m[1,1], R.age))
+
+# Updated Leslie matrix with reproductive senescence
+m <- rbind(t(R), m.init[2:10,])
 ```
 
 # Create a components martix
