@@ -20,6 +20,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1595437/
 rm(list = ls())
 getwd()
 setwd("~/GitHub/MicroLong/")
+setwd("~/../GitHub/MicroLong/")
 require(demogR)
 ```
 
@@ -48,7 +49,7 @@ eig.m <- eigen.analysis(m.init)
 # n = age class
 # b = power describing shape of curve; 1 = linear; >1 = convex; < 1 concave
 
-a <- 0.2
+a <- 0
 n <- seq(2, 10, by = 1)
 b <- 0.8
 R.age <- m.init[1,1] - a * n^b
